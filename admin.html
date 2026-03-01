@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TripKinaa | Admin Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style> body { font-family: 'Poppins', sans-serif; background-color: #f3f4f6; } </style>
+</head>
+<body class="min-h-screen p-8">
+
+    <div class="max-w-4xl mx-auto bg-white rounded-2xl shadow-xl overflow-hidden">
+        <div class="bg-[#3b5249] p-6 text-white flex justify-between items-center">
+            <div>
+                <h1 class="text-2xl font-bold"><i class="fa-solid fa-database mr-2"></i>TripKinaa Admin</h1>
+                <p class="text-sm text-gray-300">Live Database Management (Firestore)</p>
+            </div>
+            <div class="bg-green-500/20 text-green-300 px-3 py-1 rounded-full text-xs font-bold border border-green-500/50">
+                Connected
+            </div>
+        </div>
+
+        <div class="p-8">
+            <p class="text-gray-600 mb-4 text-sm">Update the travel knowledge base below. The AI will immediately start using this new data.</p>
+            
+            <textarea id="db-textarea" class="w-full h-96 border-2 border-gray-200 rounded-xl p-4 font-mono text-sm focus:border-[#3b5249] outline-none shadow-inner" placeholder="Loading current data from Cloud..."></textarea>
+            
+            <div class="mt-6 flex justify-between items-center">
+                <span id="save-status" class="text-green-600 font-bold opacity-0 transition duration-300"><i class="fa-solid fa-check-circle mr-1"></i> Database Updated Successfully!</span>
+                <button id="btn-save-db" class="bg-[#dcb68a] text-[#1e3026] font-bold px-8 py-3 rounded-lg hover:bg-[#c9a377] transition shadow-md flex items-center gap-2">
+                    <i class="fa-solid fa-cloud-arrow-up"></i> Save to Cloud
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+        import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyA8MAZcnMfEsAC-HashVxfbnRsEyfnvJs4",
+            authDomain: "chatapp-b0bd9.firebaseapp.com",
+            projectId: "chatapp-b0bd9",
+            storageBucket: "chatapp-b0bd9.firebasestorage.app",
+            messagingSenderId: "649239462676",
+            appId: "1:649239462676:web:c2a36f55fc3b6cf7e5b801",
+            measurementId: "G-SBWLFSFQC7"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const docRef = doc(db, "knowledge_base", "travel_data");
+
+        const dbTextarea = document.getElementById('db-textarea');
+        const btnSaveDb = document.getElementById('btn-save-db');
+        const saveStatus = document.getElementById('save-status');
+
+        // Load existing data on start
+        async function loadData() {
+            try {
+                const docSnap = await getDoc(docRef);
+                if (docSnap.exists()) {
+                    dbTextarea.value = docSnap.data().content;
+                } else {
+                    dbTextarea.value = "Add your travel data here...";
+                }
+            } catch (error) {
+                console.error(error);
+                dbTextarea.value = "Error connecting to Database. Check rules.";
+            }
+        }
+
+        // Save data to Firebase
+        btnSaveDb.addEventListener('click', async () => {
+            btnSaveDb.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
+            try {
+                await setDoc(docRef, { content: dbTextarea.value });
+                btnSaveDb.innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i> Save to Cloud';
+                saveStatus.style.opacity = '1';
+                setTimeout(() => { saveStatus.style.opacity = '0'; }, 3000);
+            } catch (error) {
+                console.error(error);
+                alert("Error saving data. Make sure Firebase rules allow read/write.");
+                btnSaveDb.innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i> Save to Cloud';
+            }
+        });
+
+        // Initialize
+        loadData();
+    </script>
+</body>
+</html>
